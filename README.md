@@ -29,6 +29,8 @@ The goal of this project is to explore how AI agents and workflow automation can
 The system is designed as a multi-stage filtering and ranking pipeline:
 
 ```
+Webhook / API Trigger
+        ↓
 LinkedIn Jobs (Apify)
         ↓
 Filter & Deduplicate
@@ -37,15 +39,15 @@ PreScore (rule-based scoring)
         ↓
 Prepare Prompt Input
         ↓
-LLM Job Scoring (Groq)
+LLM Job Scoring (DeepSeek)
         ↓
 Ranking & Top N
         ↓
 Notion Database
         ↓
 Logging & Metrics
-        ↓
-Webhook / API Trigger
+        
+
 ```
 
 ### Design Goals
