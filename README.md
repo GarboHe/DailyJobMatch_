@@ -20,6 +20,10 @@ DailyJobMatch is an automated workflow that:
 7. Logs pipeline metrics (scraped, filtered, scored, selected)
 8. Provides a webhook endpoint for future full-stack integration
 
+<img width="1651" height="587" alt="image" src="https://github.com/user-attachments/assets/af2526e6-3eb1-40f3-a168-3bc79f39b397" />
+
+
+
 The goal of this project is to explore how AI agents and workflow automation can be combined to build a **decision-support pipeline**, not just a scraper.
 
 ---
@@ -30,22 +34,20 @@ The system is designed as a multi-stage filtering and ranking pipeline:
 
 ```
 Webhook / API Trigger
+
         ↓
-LinkedIn Jobs (Apify)
+Configuration
         ↓
-Filter & Deduplicate
+CV Retrieval and Preprocessing 
         ↓
-PreScore (rule-based scoring)
-        ↓
-Prepare Prompt Input
+PreScore (rule-based scoring) &Prepare Prompt Input
         ↓
 LLM Job Scoring (DeepSeek)
         ↓
-Ranking & Top N
+Parse & Merge Result
         ↓
-Notion Database
-        ↓
-Logging & Metrics
+Output result (Notion Database)
+
         
 
 ```
@@ -103,7 +105,7 @@ Each workflow run records:
 * Number of jobs scraped
 * Jobs after filtering
 * Jobs evaluated by LLM
-* Final Top-N jobs
+
 
 This helps monitor pipeline performance and optimize filtering thresholds.
 
@@ -118,7 +120,7 @@ This is the first step toward turning the system into a **full-stack AI job mana
 
 * **n8n** – Workflow automation
 * **Apify** – LinkedIn job scraping
-* **Groq / LLM** – Job–CV semantic evaluation
+* **DeepSeek / LLM** – Job–CV semantic evaluation
 * **Notion API** – Job tracking database
 * **Google Drive API** – CV retrieval
 * **Docker** – Deployment
@@ -148,7 +150,7 @@ http://localhost:5678
 Import workflow:
 
 ```
-workflow/Daily_Job_Match.json
+workflow/Daily_Job_Match_.json
 ```
 
 ---
@@ -223,8 +225,6 @@ Major additions and improvements include:
 * Heuristic pre-scoring and ranking logic
 * Structured LLM evaluation and scoring system
 * Prompt engineering for job–CV matching
-* Top-N ranking logic
-* Logging and pipeline metrics
 * Token optimization for LLM prompts
 * Webhook integration for future full-stack development
 * System architecture redesign into a multi-stage decision pipeline
@@ -236,7 +236,7 @@ The focus of this project is **system design, scoring logic, automation architec
 ## License
 
 This project is based on an open-source project licensed under the MIT License.
-Modifications and extensions were made by Garbo.
+Modifications and extensions were made by Garbo He.
 
 See LICENSE file for original license.
 
