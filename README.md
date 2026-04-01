@@ -233,16 +233,16 @@ The focus of this project is **system design, scoring logic, automation architec
 ---
 
 
-##Example 
+## Example 
 
-###Input
+### Input
 Config:
 * Keywords:Data Analyst
 * Location:Europe
 * Preferred languages:English
 * Seniority level:Junior
 
-###Ouput
+### Ouput
 
 <img width="1642" height="925" alt="271fe3c63078964b9943b40cc51f6fb" src="https://github.com/user-attachments/assets/76032413-34e4-44a3-871f-2af6172328ce" />
 
