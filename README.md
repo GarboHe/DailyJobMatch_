@@ -172,8 +172,7 @@ In the Config node you can set:
 * Location
 * Preferred languages
 * Seniority level
-* Top N jobs
-* LinkedIn filters
+
 
 ---
 
@@ -233,6 +232,23 @@ The focus of this project is **system design, scoring logic, automation architec
 
 ---
 
+
+##Example 
+
+###Input
+Config:
+* Keywords:Data Analyst
+* Location:Europe
+* Preferred languages:English
+* Seniority level:Junior
+
+###Ouput
+
+<img width="1642" height="925" alt="271fe3c63078964b9943b40cc51f6fb" src="https://github.com/user-attachments/assets/76032413-34e4-44a3-871f-2af6172328ce" />
+
+
+
+---
 ## License
 
 This project is based on an open-source project licensed under the MIT License.
@@ -258,8 +274,3 @@ This project demonstrates:
 
 ---
 
-如果这是放在 GitHub 上用于求职项目，这个 README 的定位已经是：
-
-**AI workflow / LLM system / automation platform prototype**
-
-而不是普通脚本项目，这一点很重要。
