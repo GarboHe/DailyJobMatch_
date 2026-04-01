@@ -1,0 +1,693 @@
+{
+  "name": "Daily_Job_Match_",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        720
+      ],
+      "id": "4788b6e0-e1a9-47a8-99b1-a30200face17",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/curious_coder~linkedin-jobs-scraper/run-sync-get-dataset-items?token= {{ $('Config').item.json.apifyDatasetUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Config').item.json.apifyDatasetUrl }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -784,
+        720
+      ],
+      "id": "74f391e2-b972-4a50-ac99-63f3ee44efca",
+      "name": "Linkedin"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert job matching assistant.\n\nYour task is to evaluate how well a job matches the candidate's CV and return a strict JSON object only.\n\nThe job has already passed an initial rule-based filter. A lightweight pre-score is provided as a weak signal only. Do not blindly trust it. Use it as context, but make your own judgment from the CV and the job description.\n\n### Candidate CV\n{{ $json.cv_text }}\n\n### Job Information\nTitle: {{ $json.job_meta.title }}\nCompany: {{ $json.job_meta.company }}\nLocation: {{ $json.job_meta.location }}\nDescription: {{ $json.job_text }}\nURL: {{ $json.job_meta.url }}\n\n### Pre-filter Signals\nPreScore: {{ $json.job_meta.pre_score }}\nPreScoreReasons: {{ JSON.stringify($json.job_meta.pre_score_reasons || []) }}\n\n### Evaluation Instructions\n\nScore the job across these dimensions:\n\n1. background_match (0-10)\nHow well the role matches the candidate's overall domain/background.\n\n2. skills_overlap (0-30)\nHow well the required or preferred skills match the candidate's actual technical skills.\n\n3. experience_relevance (0-30)\nHow closely the responsibilities align with the candidate's past work, projects, and experience.\n\n4. seniority (0-10)\nHow appropriate the role is for the candidate's current level.\nPenalize clearly over-senior roles.\n\n5. language_requirement (0-10)\nScore high if the language requirements are compatible with the candidate.\nPenalize roles that clearly require a non-preferred language.\n\n6. company_score (0-10)\nGive a bonus if the company or role is especially aligned with the candidate's target industries or interests.\n\n### Important Rules\n\n- Use the CV and the job description as the primary evidence.\n- Use PreScore only as a secondary hint.\n- Do not reward a role just because PreScore is high.\n- Do not reject a role only because PreScore is modest if the CV-job match is strong.\n- Penalize clearly if:\n  - the role is too senior\n  - the role requires a language the candidate likely does not have\n  - the role appears unrelated to the candidate's target path\n  - the role explicitly does not provide visa sponsorship or requires existing work authorization\n- If visa sponsorship is clearly available or the role is explicitly open internationally, reflect that positively in the overall judgment.\n- Be conservative and evidence-based.\n- Avoid hallucinating skills or experience that are not supported by the CV.\n- overall must equal the exact sum of the six category scores.\n\n### Summary Writing Rules\n\n- summary: 2-4 sentences, concise and specific\n- keywords: 3-8 important keywords from the job\n- fit_bullets: 3 short bullet points explaining why the role does or does not fit\n- connector: 1 short sentence that can be used later in a cover letter or outreach message\n\n### Output Rules\n\nReturn ONLY valid JSON.\nDo not include markdown.\nDo not include explanations outside JSON.\n\nUse exactly this schema:\n\n{\n  \"score\": {\n    \"overall\": 0,\n    \"background_match\": 0,\n    \"skills_overlap\": 0,\n    \"experience_relevance\": 0,\n    \"seniority\": 0,\n    \"language_requirement\": 0,\n    \"company_score\": 0\n  },\n  \"summary\": \"\",\n  \"keywords\": [],\n  \"fit_bullets\": [],\n  \"connector\": \"\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        528,
+        528
+      ],
+      "id": "1e06a94c-f4fe-4bac-9f78-7dd47de3004d",
+      "name": "Score the job and extract",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0619efc8-36c0-40ae-a873-68be9b0bbf3b",
+              "name": "apifyDatasetUrl",
+              "value": "={{ $json.body.apifyToken }}",
+              "type": "string"
+            },
+            {
+              "id": "a5a26dc1-d939-4aee-a01e-94166fb0fa71",
+              "name": "topDetailed",
+              "value": "5",
+              "type": "string"
+            },
+            {
+              "id": "66633cbc-76c5-47af-8c1b-3af64626a711",
+              "name": "topTotal",
+              "value": "10",
+              "type": "string"
+            },
+            {
+              "id": "7c3a4b5d-6e7f-8g9h-0i1j-2k3l4m5n6o7p",
+              "name": "keywords",
+              "value": "={{ JSON.stringify($json.body.keywords) }}",
+              "type": "string"
+            },
+            {
+              "id": "8d4b5c6e-7f8g-9h0i-1j2k-3l4m5n6o7p8q",
+              "name": "location",
+              "value": "={{ $json.body.location }}",
+              "type": "string"
+            },
+            {
+              "id": "9e5c6d7f-8g9h-0i1j-2k3l-4m5n6o7p8q9r",
+              "name": "preferLanguages",
+              "value": "={{ JSON.stringify($json.body.preferLanguages) }}",
+              "type": "string"
+            },
+            {
+              "id": "0f6d7e8g-9h0i-1j2k-3l4m-5n6o7p8q9r0s",
+              "name": "seniorityPreference",
+              "value": "={{ $json.body.seniorityPreference }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1696,
+        720
+      ],
+      "id": "a0f0acad-9e76-413b-bff7-1741a5c03a3b",
+      "name": "Config"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Normalize a single LinkedIn (Apify) item\nconst j = $json;\n\nreturn {\n  source: 'linkedin',\n\n  id: j.id || '',\n  title: (j.title || '').trim(),\n  company: (j.companyName || '').trim(),\n  location: (j.location || '').trim(),\n\n  url: (j.link || j.applyUrl || '').trim(),\n  apply_url: j.applyUrl || '',\n  posted_at: j.postedAt || new Date().toISOString(),\n\n  seniority_level: j.seniorityLevel || '',\n  employment_type: j.employmentType || '',\n  job_function: j.jobFunction || '',\n  industries: j.industries || '',\n  salary: j.salary || '',\n\n  raw_description: String(j.descriptionText || j.description || ''),\n\n  company_website: j.companyWebsite || '',\n  company_linkedin: j.companyLinkedinUrl || '',\n  company_slogan: j.companySlogan || '',\n  company_description: j.companyDescription || '',\n  company_employees: j.companyEmployeesCount ?? null,\n  company_logo: j.companyLogo || '',\n  company_address: j.companyAddress\n    ? [\n        j.companyAddress.streetAddress,\n        j.companyAddress.addressLocality,\n        j.companyAddress.addressRegion,\n        j.companyAddress.postalCode,\n        j.companyAddress.addressCountry,\n      ]\n        .filter(Boolean)\n        .join(', ')\n    : '',\n\n  text_for_matching: [\n    j.title,\n    j.companyName,\n    j.location,\n    j.descriptionText,\n    j.companyDescription,\n  ]\n    .filter(Boolean)\n    .join(' — ')\n    .replace(/\\s+/g, ' ')\n    .slice(0, 20000),\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -592,
+        720
+      ],
+      "id": "4fc59628-ae0b-475f-9a09-09cbd58411ed",
+      "name": "NormalizeData"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Function node (NOT Function Item)\n\n// stable hash\nfunction hashKey(title, company, url) {\n  const s = (title || '') + '|' + (company || '') + '|' + (url || '');\n  let h = 5381; \n  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) + s.charCodeAt(i);\n  return (h >>> 0).toString(16);\n}\n\n// ban list\nconst BAN = [/no\\s+(?:visa\\s+)?sponsorship/i,\n  /must\\s+be\\s+(?:legally\\s+)?authorized/i,\n  /we\\s+do\\s+not\\s+(?:offer|provide)\\s+sponsorship/i,\n  /candidates?\\s+must\\s+have\\s+.*\\s+work\\s+(?:permit|authorization)/i,\n  \n];\n\nconst input = $input.all();\nconst seen = new Set();\nconst out = [];\n\nfor (let i = 0; i < input.length; i++) {\n  const src = input[i];\n  const j = { ...(src.json || {}) }; // shallow clone\n\n  // ban check\n  const hay = ((j.title || '') + ' ' + (j.raw_description || '')).toLowerCase();\n  if (BAN.some(re => re.test(hay))) continue;\n\n  // dedupe\n  const k = hashKey(\n    (j.title || '').toLowerCase(),\n    (j.company || '').toLowerCase(),\n    (j.url || '').toLowerCase()\n  );\n  if (seen.has(k)) continue;\n  seen.add(k);\n\n  j.hash = k;\n\n  // preserve pairing so downstream nodes don't complain\n  out.push({\n    json: j,\n    pairedItem: { item: i }\n  });\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        720
+      ],
+      "id": "41e87078-6a38-415e-8fd3-a4c78c1172aa",
+      "name": "Filter and deduplicate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6bdc4c8e-3891-4c52-a7c5-3d8dd0565be6",
+              "name": "cv_text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1184,
+        720
+      ],
+      "id": "b8a3fa7c-143b-4428-99f0-aa88929edfe0",
+      "name": "MapResume"
+    },
+    {
+      "parameters": {
+        "content": "**Webhook:**\n- Calling the API by this node",
+        "height": 320,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1888,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "5302072c-d0a3-494e-81cf-657c5ad6dbdf",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "**Configuration**: \nDefines all key workflow parameters such as \n- API tokens, \n- URLs\n- Searching config",
+        "height": 320,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1744,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "f3235073-83ba-4126-88d4-bbdc3fe84dbf",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "**CV Retrieval and Preprocessing**:\n- Converts your CV PDF into plain text for downstream analysis.\n- Stores and labels the extracted CV text in a consistent field for use by the AI agent.",
+        "height": 320,
+        "width": 528,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1536,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "8c4786ca-c02d-4f22-9592-3332c7ca3856",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "**Job Data Collection and Preprocessing:**\n- Collects fresh job postings from LinkedIn based on predefined search queries\n- Normalizes and structures raw job data into consistent fields (title, company, location, description, metadata)\n- Removes duplicates and filters out low-relevance roles using keyword-based pre-filtering\n- Applies a rule-based pre-scoring system to prioritize potentially relevant roles\n- Enriches each job with candidate CV context and structured metadata for downstream AI evaluation",
+        "height": 320,
+        "width": 1220,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1008,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "1a173ed9-a4bb-477d-8704-4e48c0d33b57",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// === Prepare compact prompt input for the AI scoring agent ===\n\n// Fetch your CV text from the earlier node\n// (Change 'MapResume' to your actual node name that contains cv_text)\nconst cv_text = $('MapResume').item.json.cv_text;\n\nconst job = $json;\n\n// limit long job text to avoid token waste\nconst maxDesc = 5000; // ~1000 words\nconst cleanDesc = (job.raw_description || '')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, maxDesc);\n\n// build a structured summary text block for LLM\nconst jobTextBlock = [\n  `Job title: ${job.title || ''}`,\n  `Company: ${job.company || ''}`,\n  job.location ? `Location: ${job.location}` : '',\n  job.seniority_level ? `Seniority: ${job.seniority_level}` : '',\n  job.employment_type ? `Employment type: ${job.employment_type}` : '',\n  job.industries ? `Industry: ${job.industries}` : '',\n  job.job_function ? `Function: ${job.job_function}` : '',\n  '',\n  'Job Description:',\n  cleanDesc,\n].filter(Boolean).join('\\n');\n\n// return one item per job\nreturn {\n  job_text: jobTextBlock,\n  cv_text: cv_text.slice(0, 10000), // safety cap\n  job_meta: {\n    title: job.title || '',\n    company: job.company || '',\n    url: job.url || job.apply_url || '',\n    hash: job.hash || '',\n    location: job.location || '',\n    posted_at: job.posted_at || '',\n    source: job.source || 'LinkedIn',\n    pre_score:        job.preScore,          // 加这行\n    pre_score_reasons: job.preScoreReasons,\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        720
+      ],
+      "id": "161f17bd-13c8-4366-8af5-c611bbc9f315",
+      "name": "Prepare AI Input"
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n**AI Scoring and Structured Output:**\n*Score the Job and Extract:*\n- Uses LLM to evaluate job–CV fit based on full contextual input\n- Treats pre-score as a weak signal, not a decision driver\n- Scores across multiple dimensions (background, skills, experience, seniority, language, company fit)\n- Generates structured JSON output including score breakdown, summary, keywords, and fit insights\n*Structured Output Parser:*\n- Validates and enforces correct JSON format.\n- Merges AI output with job metadata for downstream ranking and storage",
+        "height": 752,
+        "width": 672,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        208,
+        464
+      ],
+      "typeVersion": 1,
+      "id": "c45653e9-d719-4862-8d94-d251133d71ef",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "**Parse & Merge Results**\n- Convert the chat model’s response into a clean and valid JSON object\n- Recalculate overall score to ensure consistency across all scoring dimensions\n",
+        "height": 352,
+        "width": 484,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        880,
+        512
+      ],
+      "typeVersion": 1,
+      "id": "b63272c6-6bd7-4fa5-824d-37285efe4524",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let raw;\n\n// 1) Extract raw model output\nif (typeof $json.output === 'string') {\n  raw = $json.output;\n} else if ($json.choices?.[0]?.message?.content) {\n  raw = $json.choices[0].message.content;\n} else if (typeof $json.text === 'string') {\n  raw = $json.text;\n} else {\n  raw = JSON.stringify($json);\n}\n\nraw = String(raw).trim();\nraw = raw.replace(/^```json\\s*/i, '').replace(/```$/i, '').trim();\n\n// 2) Parse JSON safely\nlet data;\ntry {\n  data = JSON.parse(raw);\n} catch (e) {\n  const m = raw.match(/\\{[\\s\\S]*\\}/);\n  if (m) {\n    try {\n      data = JSON.parse(m[0]);\n    } catch (e2) {\n      data = {\n        parse_error: e2.message,\n        raw\n      };\n    }\n  } else {\n    data = {\n      parse_error: e.message,\n      raw\n    };\n  }\n}\n\n// 3) Normalize score structure\nif (!data || typeof data !== 'object') {\n  data = {};\n}\n\nif (!data.score || typeof data.score !== 'object') {\n  data.score = {};\n}\n\nconst score = data.score;\n\nscore.background_match = Number(score.background_match) || 0;\nscore.skills_overlap = Number(score.skills_overlap) || 0;\nscore.experience_relevance = Number(score.experience_relevance) || 0;\nscore.seniority = Number(score.seniority) || 0;\nscore.language_requirement = Number(score.language_requirement) || 0;\nscore.company_score = Number(score.company_score) || 0;\n\n// Always recalculate overall to ensure consistency\nscore.overall =\n  score.background_match +\n  score.skills_overlap +\n  score.experience_relevance +\n  score.seniority +\n  score.language_requirement +\n  score.company_score;\n\n// 4) Normalize other fields\ndata.summary = typeof data.summary === 'string' ? data.summary : 'No summary available';\ndata.keywords = Array.isArray(data.keywords) ? data.keywords : [];\ndata.fit_bullets = Array.isArray(data.fit_bullets) ? data.fit_bullets : [];\ndata.connector = typeof data.connector === 'string' ? data.connector : 'No connector available';\n\n// 5) Recover job_meta\nlet job_meta = {};\n\nif ($json.job_meta) {\n  job_meta = $json.job_meta;\n} else if ($input.item?.json?.job_meta) {\n  job_meta = $input.item.json.job_meta;\n} else {\n  try {\n    job_meta = $('Prepare AI Input').item.json.job_meta || {};\n  } catch (e) {\n    job_meta = {};\n  }\n}\n\n// 6) Return flattened structure\nreturn {\n  ...data,\n  job_meta\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        640
+      ],
+      "id": "15801482-1c9b-475c-906b-ba1eb6e8fc4e",
+      "name": "Parse LLM JSON"
+    },
+    {
+      "parameters": {
+        "content": "**Output & Notification**\n- Save the information in Notion database",
+        "height": 320,
+        "width": 288,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        880,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "c20c99ed-0b11-4865-852d-972b992c57b4",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Config').item.json;\nconst keywords = JSON.parse(config.keywords);\nconst location = encodeURIComponent(config.location);\nconst altLocation = encodeURIComponent(config.alternativeLocation);\nconst geoId = config.geoId;\nconst filters = config.jobFilters;\nconst altFilters = config.alternativeJobFilters;\n\n// Add time filter parameter (defaults to past 24 hours)\nconst timeFilter = config.timeFilter || 'r86400'; // r86400 = past 24 hours\n\nconst urls = keywords.map((kw, idx) => {\n  const encodedKw = encodeURIComponent(kw);\n  const loc = idx < 3 ? location : altLocation;\n  const filter = idx < 3 ? filters : altFilters;\n  \n  return `https://www.linkedin.com/jobs/search?keywords=${encodedKw}&location=${loc}&f_TPR=${timeFilter}&position=1&pageNum=0`;\n});\n\nreturn [{\n  json: {\n    count: 100,\n    scrapeCompany: true,\n    urls: urls\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        720
+      ],
+      "id": "f0c9238a-ae37-4dde-b901-207e36d25201",
+      "name": "LinkedinSearchLink"
+    },
+    {
+      "parameters": {
+        "content": "**(Optional) Batch Running:**\n- Runs the AI agent in controlled batches \ninstead of sending all items at once.\n- Each batch is processed sequentially and loops back until all items are processed.\n- When complete, all processed items continue to ranking and selection.",
+        "height": 400,
+        "width": 672,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        208,
+        64
+      ],
+      "typeVersion": 1,
+      "id": "57a6a1f2-5d18-4051-b8ce-4e6d38aabde1",
+      "name": "Sticky Note17"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1136,
+        640
+      ],
+      "id": "7a7825bd-d5dc-48be-be78-1e2a1bb16a1e",
+      "name": "Rate Limit Delay2",
+      "webhookId": "b2bd322f-e068-4fce-afda-675e0f7221c6"
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        320,
+        240
+      ],
+      "id": "28a590ad-06a4-4e33-94e2-835ad80ed910",
+      "name": "Loop Over Items2",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        400,
+        736
+      ],
+      "id": "5167ad57-93b0-4198-a220-f5f85526ea44",
+      "name": "DeepSeek Chat Model"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---------- Read config ----------\nconst cfg = $('Config').first().json;\n\nfunction parseArray(v) {\n  if (Array.isArray(v)) return v;\n  if (typeof v === 'string') {\n    try {\n      const parsed = JSON.parse(v);\n      return Array.isArray(parsed) ? parsed : [parsed];\n    } catch {\n      return [v];\n    }\n  }\n  return [];\n}\n\nconst keywords = parseArray(cfg.keywords).map(s => String(s).toLowerCase().trim()).filter(Boolean);\nconst preferLanguages = parseArray(cfg.preferLanguages).map(s => String(s).toLowerCase().trim()).filter(Boolean);\nconst locationPref = String(cfg.location || '').toLowerCase().trim();\nconst seniorityPref = String(cfg.seniorityPreference || '').toLowerCase().trim();\n\n// ---------- Dictionaries ----------\nconst LOCATION_MAP = {\n  europe: [\n    'europe', 'eu', 'european',\n    'germany', 'france', 'netherlands', 'sweden', 'denmark',\n    'belgium', 'spain', 'italy', 'ireland', 'poland',\n    'portugal', 'finland', 'norway', 'austria', 'switzerland',\n    'czech republic', 'czechia', 'hungary', 'romania', 'greece',\n    'luxembourg', 'estonia', 'latvia', 'lithuania', 'slovakia',\n    'slovenia', 'croatia', 'bulgaria'\n  ],\n  uk: ['uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland', 'britain'],\n  north_america: ['north america', 'usa', 'united states', 'canada'],\n};\n\nconst LANGUAGE_MAP = {\n  english: ['english'],\n  french: ['french', 'français', 'francais'],\n  german: ['german', 'deutsch'],\n  dutch: ['dutch', 'nederlands'],\n  spanish: ['spanish', 'español', 'espanol'],\n  italian: ['italian', 'italiano'],\n  portuguese: ['portuguese', 'português', 'portugues'],\n};\n\nconst SENIORITY_RULES = {\n junior: {\n positive: [\n /\\bjunior\\b/,\n /\\bentry[- ]level\\b/,\n /\\bgraduate\\b/,\n /\\bnew grad\\b/,\n /\\bearly career\\b/\n ],\n negative: [\n /\\bsenior\\b/,\n /\\blead\\b/,\n /\\bprincipal\\b/,\n /\\bstaff\\b/,\n /\\bmanager\\b/,\n /\\bdirector\\b/,\n /\\bhead of\\b/\n ],\n negativeYears: [\n /\\b[5-9]\\+?\\s+years\\b/,\n /\\b10\\+?\\s+years\\b/,\n /\\b[5-9]\\s*-\\s*[9]\\s+years\\b/,\n /\\b[6-9]\\s*-\\s*1[0-9]\\s+years\\b/\n ]\n },\n 'mid-level': {\n positive: [\n /\\bmid[- ]level\\b/,\n /\\bintermediate\\b/,\n /\\bassociate\\b/,\n /\\b2[- ]?4\\s+years\\b/,\n /\\b3[- ]?5\\s+years\\b/\n ],\n negative: [\n /\\bprincipal\\b/,\n /\\bstaff\\b/,\n /\\bdirector\\b/,\n /\\bhead of\\b/\n ],\n negativeYears: [\n /\\b8\\+?\\s+years\\b/,\n /\\b10\\+?\\s+years\\b/\n ]\n },\n senior: {\n positive: [\n /\\bsenior\\b/,\n /\\blead\\b/,\n /\\bprincipal\\b/,\n /\\bstaff\\b/\n ],\n negative: [\n /\\bintern\\b/,\n /\\binternship\\b/,\n /\\bgraduate\\b/,\n /\\bentry[- ]level\\b/,\n /\\bjunior\\b/\n ],\n negativeYears: []\n }\n};\n\n// ---------- Regex packs ----------\nconst VISA_POSITIVE_RE = /visa sponsorship|sponsorship available|we sponsor|offer sponsorship|provide sponsorship|work visa|visa support|relocation support|immigration support|sponsor visa|will sponsor/i;\n\nconst VISA_NEGATIVE_RE = /no\\s+(?:visa\\s+)?sponsorship|must\\s+be\\s+(?:legally\\s+)?authorized|do\\s+not\\s+(?:offer|provide)\\s+sponsorship|cannot\\s+(?:offer|provide)\\s+(?:visa\\s+)?sponsorship|sponsorship\\s+(?:is\\s+)?not\\s+(?:available|provided|offered)|without\\s+visa\\s+sponsorship/i;\n\n// If English is preferred, penalize explicit non-English requirements\nconst NON_ENGLISH_REQUIRED_RE = /\\bfrench\\b.*\\brequired\\b|\\brequired\\b.*\\bfrench\\b|\\bgerman\\b.*\\brequired\\b|\\brequired\\b.*\\bgerman\\b|\\bdeutsch\\b.*\\berforderlich\\b|\\berforderlich\\b.*\\bdeutsch\\b|\\bspanish\\b.*\\brequired\\b|\\brequired\\b.*\\bspanish\\b|\\bitalian\\b.*\\brequired\\b|\\brequired\\b.*\\bitalian\\b|\\bdutch\\b.*\\brequired\\b|\\brequired\\b.*\\bdutch\\b/i;\n\n// ---------- Main ----------\nconst input = $input.all();\nconst out = [];\n\nfor (let i = 0; i < input.length; i++) {\n  const src = input[i];\n  const j = { ...(src.json || {}) };\n\n  const title = String(j.title || '').toLowerCase();\n  const company = String(j.company || '').toLowerCase();\n  const desc = String(j.raw_description || '').toLowerCase();\n  const jobLocation = String(j.location || '').toLowerCase();\n\n  // Rules matching text: exclude company to avoid false triggers\n  const hay = `${title} ${desc} ${jobLocation}`.toLowerCase();\n\n  // Wider matching text for keywords\n  const hayFull = `${title} ${company} ${desc} ${jobLocation}`.toLowerCase();\n\n  let preScore = 0;\n  const reasons = [];\n\n  // ---------- 1) Keywords: max 9 ----------\n  \nlet keywordPoints = 0;\n\nfor (const kw of keywords) {\n if (!kw) continue;\n\n if (hayFull.includes(kw)) {\n keywordPoints += 3;\n reasons.push(`keyword matched: ${kw}`);\n continue;\n }\n\n const tokens = kw.split(/\\s+/).filter(Boolean);\n const hitCount = tokens.filter(t => hayFull.includes(t)).length;\n\n if (tokens.length > 1 && hitCount >= Math.ceil(tokens.length * 0.6)) {\n keywordPoints += 2;\n reasons.push(`keyword partial matched: ${kw}`);\n }\n}\n\npreScore += Math.min(keywordPoints, 9);\n\n\n  // ---------- 2) Location: max 3 ----------\n  // remote is always treated as a positive signal\n  if (locationPref) {\n    const locationTerms = LOCATION_MAP[locationPref] || [locationPref];\n\n    if (\n      locationTerms.some(term => hay.includes(term)) ||\n      hay.includes('remote')\n    ) {\n      preScore += 3;\n      reasons.push(`location matched: ${locationPref} or remote`);\n    }\n  } else if (hay.includes('remote')) {\n    preScore += 3;\n    reasons.push('location matched: remote');\n  }\n\n  // ---------- 3) Language: max +2 / penalty -3 ----------\n  if (preferLanguages.length > 0) {\n    if (preferLanguages.includes('english')) {\n      if (NON_ENGLISH_REQUIRED_RE.test(hay)) {\n        preScore -= 3;\n        reasons.push('language penalty: non-english required');\n      } else {\n        preScore += 2;\n        reasons.push('language assumed: english/default');\n      }\n    } else {\n      let matchedLanguage = false;\n\n      for (const lang of preferLanguages) {\n        const langTerms = LANGUAGE_MAP[lang] || [lang];\n\n        if (langTerms.some(term => hay.includes(term))) {\n          preScore += 2;\n          reasons.push(`language matched: ${lang}`);\n          matchedLanguage = true;\n          break;\n        }\n      }\n\n      if (!matchedLanguage) {\n        reasons.push('language not explicitly mentioned');\n      }\n    }\n  }\n\n  // ---------- 4) Seniority: +3 / -4 / -3 ----------\n  if (seniorityPref && SENIORITY_RULES[seniorityPref]) {\n    const rules = SENIORITY_RULES[seniorityPref];\n\n    if (rules.positive.some(re => re.test(hay))) {\n      preScore += 3;\n      reasons.push(`seniority matched: ${seniorityPref}`);\n    }\n\n    if (rules.negative.some(re => re.test(hay))) {\n      preScore -= 4;\n      reasons.push(`seniority penalty: not ${seniorityPref}`);\n    }\n\n    if (rules.negativeYears.some(re => re.test(hay))) {\n      preScore -= 3;\n      reasons.push('experience penalty: years too high');\n    }\n  }\n\n  // ---------- 5) Visa sponsorship: +4 / -8 ----------\n  if (VISA_POSITIVE_RE.test(hay)) {\n    preScore += 4;\n    reasons.push('visa sponsorship signal found');\n  }\n\n  if (VISA_NEGATIVE_RE.test(hay)) {\n    preScore -= 8;\n    reasons.push('visa sponsorship negative signal found');\n  }\n\n  // ---------- Save score ----------\n  j.preScore = preScore;\n  j.preScoreReasons = reasons;\n\n  // ---------- Threshold ----------\n  if (preScore >= 6) {\n    out.push({\n      json: j,\n      pairedItem: { item: i }\n    });\n  }\n}\n\nreturn out;\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        720
+      ],
+      "id": "7b12d44a-cfc8-4165-a830-307d88b1ff5f",
+      "name": "Prescore"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "3193daf4-1412-8007-b770-d2b67e9ed1f8",
+          "mode": "list",
+          "cachedResultName": "JobPosition_report",
+          "cachedResultUrl": "https://www.notion.so/3193daf414128007b770d2b67e9ed1f8"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Application Link|url",
+              "urlValue": "={{$json.job_meta.url}}"
+            },
+            {
+              "key": "Company|rich_text",
+              "textContent": "={{$json.job_meta.url}}"
+            },
+            {
+              "key": "Fit Bullets|rich_text",
+              "richText": true,
+              "text": {
+                "text": [
+                  {
+                    "text": "={{$json.job_meta.company}}",
+                    "annotationUi": {}
+                  }
+                ]
+              }
+            },
+            {
+              "key": "Job Title|title",
+              "title": "={{$json.job_meta.title}}"
+            },
+            {
+              "key": "Keywords|rich_text",
+              "richText": true,
+              "text": {
+                "text": [
+                  {
+                    "text": "={{ $json.keywords.join(\", \") }}",
+                    "annotationUi": {}
+                  }
+                ]
+              }
+            },
+            {
+              "key": "Location|rich_text",
+              "textContent": "={{ $json.keywords.join(\", \") }}"
+            },
+            {
+              "key": "Match score|number",
+              "numberValue": "={{$json.score.overall}}"
+            },
+            {
+              "key": "Specific Scores|rich_text",
+              "richText": true,
+              "text": {
+                "text": [
+                  {
+                    "text": "={{ \n[\n  \"background_match: \" + $json.score.background_match,\n  \"skills_overlap: \" + $json.score.skills_overlap,\n  \"experience_relevance: \" + $json.score.experience_relevance,\n  \"seniority: \" + $json.score.seniority,\n  \"language_requirement: \" + $json.score.language_requirement,\n  \"company_score: \" + $json.score.company_score\n].join(\"\\n\")\n}}",
+                    "annotationUi": {}
+                  }
+                ]
+              }
+            },
+            {
+              "key": "Posting date|date",
+              "date": "={{ $json.job_meta?.posted_at ? $json.job_meta.posted_at.split(\"T\")[0] : null }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        336
+      ],
+      "id": "3ac9755a-21ad-4f88-bc0a-6601188992a2",
+      "name": "Create a database page"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d910bf58-869d-4fdb-a9a2-975811dc7a9c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1872,
+        720
+      ],
+      "id": "8595273f-79cd-4058-a482-02eed994ebce",
+      "name": "Webhook",
+      "webhookId": "d910bf58-869d-4fdb-a9a2-975811dc7a9c"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "MapResume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linkedin": {
+      "main": [
+        [
+          {
+            "node": "NormalizeData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score the job and extract": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NormalizeData": {
+      "main": [
+        [
+          {
+            "node": "Filter and deduplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter and deduplicate": {
+      "main": [
+        [
+          {
+            "node": "Prescore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MapResume": {
+      "main": [
+        [
+          {
+            "node": "LinkedinSearchLink",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare AI Input": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM JSON": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Delay2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedinSearchLink": {
+      "main": [
+        [
+          {
+            "node": "Linkedin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Delay2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Score the job and extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Score the job and extract",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prescore": {
+      "main": [
+        [
+          {
+            "node": "Prepare AI Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "db442a39-460e-4314-8124-506acd29fd8a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "756c7cb8e307bacdb635e6babb35597b71076ca5eec63c2ea36d8f6d5a9b84a7"
+  },
+  "id": "nDLMsqGVoW81QYvS",
+  "tags": []
+}
