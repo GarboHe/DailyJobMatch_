@@ -122,7 +122,6 @@ This is the first step toward turning the system into a **full-stack AI job mana
 * **Apify** – LinkedIn job scraping
 * **DeepSeek / LLM** – Job–CV semantic evaluation
 * **Notion API** – Job tracking database
-* **Google Drive API** – CV retrieval
 * **Docker** – Deployment
 * **JavaScript** – Filtering, scoring, logging logic
 * **Webhooks** – External triggering / future API integration
